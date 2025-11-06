@@ -1,0 +1,123 @@
+---
+# title: "essay, one-paged-note, homework"
+# subtitle: "subtitle"
+# author: "심민규 `mksim@seoultech.ac.kr`"
+# date: "Lastly updated on `r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    highlight: haddock
+    keep_tex: yes
+    includes:
+      in_header: latex_support/latex-topmatter_pdf.tex
+    # toc: yes # table of contents yes/no/True/False
+    # toc_depth: 2 # toc depth 1 or 2 recommended
+    number_sections: yes # yes/no/True/False
+  html_document:
+    toc: yes
+    toc_depth: '1'
+    df_print: paged
+monofont: Courier New # Consolas or Courier New
+smaller: yes
+classoption: a4paper # letter or a4paper
+header-includes:
+- \usepackage{tikz}
+- \usepackage{pgfplots}
+- \pgfplotsset{compat=1.17}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+<!-- \begin{center} -->
+<!-- \vspace{100pt} -->
+<!-- \includegraphics[height=0.3in]{latex_support/logo_ds.png}  -->
+<!-- \end{center} -->
+
+\begin{center}
+\begin{Large}
+\textbf{차량 엔진 기통 수와 연비의 관계}\\
+\end{Large}
+\begin{normalsize}
+엔진 크기 변수를 추가하여 분석한 상관관계 
+\end{normalsize}
+\end{center}
+
+```{r include=FALSE}
+library(ggplot2)
+library(gridExtra)
+library(jpeg)
+library(grid)
+```
+
+**Introduction**
+
+1999 ~ 2008년에 생산된 38개 차량 데이터셋 `mpg`으로 차량 엔진 기통 수와 연비의 관계를 분석한 결과 **엔진 기통 수가 많아질수록 연비가 떨어진다**는 경향을 확인했지만 상관관계를 파악하기 어려워 개선된 그래프를 제안하고자 한다.
+\newline
+
+
+```{r, out.height="15%", out.width="40%", fig.align="center"}
+#ggplot(data=mpg, aes(x=cyl, y=hwy)) + geom_point()
+```
+
+|                    |                                                                                |
+|:-------------------|:-------------------------------------------------------------------------------|
+|(Data) **What**     | · `mpg` 데이터셋의 `cyl`(차량 엔진 기통 수), `hwy`(연비)                       |
+|(Task) **Why**      | · 차량 엔진 기통 수와 연비의 관계                                            |
+|(Vis Idiom) **How **| · 산점도(point)                                                                |
+|(Problems)          | 1. 데이터가 수직으로 분포하고 있어 산점도라고 인지하기 어려움                  |
+|                    | 2. x, y축이 변수명으로 표기되어 있어 그래프 정보를 직관적으로 파악하기 어려움  |
+
+**Alternative Graphic**
+
+개선된 그래프는 아래와 같다.
+
+\quad\quad\quad\quad\quad<Figure 1.hand drawing plot >\quad\quad\quad\quad\quad\quad<Figure 2.엔진 크기와 연비 간 관계 plot>
+
+```{r include=TRUE}
+alternative_plot <- ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color = factor(cyl), shape = factor(cyl), group = factor(cyl))) +
+  geom_smooth(mapping = aes(x = displ, y = hwy, group = factor(cyl), color = factor(cyl)), method = "lm", se = FALSE) +
+  labs(x = "엔진 크기", y = "연비", shape = "엔진 기통 수", color = "엔진 기통 수") +
+  theme_minimal() +
+  theme(aspect.ratio = 0.5)
+
+ggsave("hw04_alternative_plot.png")
+```
+\begin{figure}
+\centering
+\label{tofsignal}
+\begin{tabular}{cc}
+\includegraphics[width=0.45\textwidth]{hw04_hand drawing.jpg}& 
+\includegraphics[width=0.55\textwidth]{hw04_alternative_plot.png}
+\end{tabular}
+\end{figure}
+
+|                    |                                                                                |
+|:-------------------|:-------------------------------------------------------------------------------|
+|(Data) **What**     | · `mpg` 데이터셋의 `displ`(엔진 크기), `cyl`(차량 엔진 기통 수), `hwy`(연비)   |
+|(Task) **Why**      | · 차량 엔진 기통 수, 엔진 크기와 연비의 관계                                 |
+|(Vis Idiom) **How **| · 산점도(point), 회귀선(line)                                                  |
+|(Improvements)      | 1. 엔진 크기 변수를 추가하여 데이터의 분포를 나타냄                            |
+|                    | 2. x, y축, 범례에 제목을 추가하여 그래프 정보를 직관적으로 파악할 수 있도록 함 |
+|                    | 3. 회귀선을 추가하여 데이터 분포와 함께 추세를 한눈에 확인할 수 있도록 개선함  |
+
+
+**Conclusion**
+
++ **엔진 크기가 클수록 엔진 기통 수가 많아지며, 연비는 떨어지는 경향**이 있다.
++ 8기통 차량의 경우 엔진 크기의 증가가 연비에 영향을 주지 않는다.
+
+
+
+
+\newpage
+
+```{r, echo=TRUE, results='hide'}
+"Written by Park, Ji-hyun"
+```
+
+

@@ -1,0 +1,204 @@
+---
+# title: "essay, one-paged-note, homework"
+# subtitle: "subtitle"
+# author: "심민규 `mksim@seoultech.ac.kr`"
+# date: "Lastly updated on `r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    highlight: haddock
+    keep_tex: yes
+    includes:
+      in_header: latex_support/latex-topmatter_pdf.tex
+    # toc: yes # table of contents yes/no/True/False
+    # toc_depth: 2 # toc depth 1 or 2 recommended
+    number_sections: yes # yes/no/True/False
+  html_document:
+    toc: yes
+    toc_depth: '1'
+    df_print: paged
+monofont: Courier New # Consolas or Courier New
+smaller: yes
+classoption: a4paper # letter or a4paper
+header-includes:
+- \usepackage{tikz}
+- \usepackage{pgfplots}
+- \pgfplotsset{compat=1.17}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+<!-- \begin{center} -->
+<!-- \vspace{100pt} -->
+<!-- \includegraphics[height=0.3in]{latex_support/logo_ds.png}  -->
+<!-- \end{center} -->
+
+\begin{center}
+\begin{Large}
+\textbf{iso2, iso3, country 변수 중복 여부 확인}\\
+\end{Large}
+\begin{normalsize}
+어떤 변수를 사용하는 것이 가장 효율적인가?
+\end{normalsize}
+\end{center}
+
+```{r include=FALSE}
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(pander)
+```
+
+**Introduction**
+
+연도, 국가, 나이, 성별 및 진단 방법별 결핵 사례 데이터셋 `who`를 기반으로 `iso2`, `iso3`, `country`가 중복되는 값인지 확인해보고자 한다. 
+\newline
+
+**Process**
+
+사전 작업을 통해 정리되지 않은 데이터를 단순화하였다. 절차는 아래와 같다.
+
+1. `who` 데이터셋 정리
+
+  + 국가를 의미하는 변수가 `country`, `iso2`, `iso3`로 총 3개 확인됨
+  + `new_sp_m014` : `newrel_f65`의 경우 결핵 사례를 의미 하는 것으로 보여 새로운 변수를 생성함
+    + `TB_cases`: 결핵 사례, `TB_cases_count`: 결핵 사례별 누적 수
+  + `TB_cases`에 대하여 `separate()`를 사용하여 결핵 유형, 성별, 연령별 결핵 사례 정보를 추출함
+
+```{r include=FALSE}
+# 1.1. `who` 데이터 조회
+pander(head(who, 3))
+
+# 1.2. `결핵 사례`변수 추가 & 결측치 제거
+who1 <- who %>% pivot_longer(
+    cols = new_sp_m014:newrel_f65, 
+    names_to = "TB_cases", 
+    values_to = "number_of_cases", 
+    values_drop_na = TRUE
+  )
+
+pander(head(who1, 3))
+#knitr::kable(head(who1, 3), row.names = FALSE)
+```
+
+
+```{r include=TRUE}
+# 1.3.`결핵 사례` 문자열 변환
+who1 <- who1 %>% 
+  mutate(TB_cases = stringr::str_replace(TB_cases, "newrel", "new_rel"))
+
+# 1.4. 결핵 유형, 성별&연령별 정보 분리
+who2 <- who1 %>% 
+  separate(TB_cases, c("new", "type", "sexage"), sep = "_")
+
+# 1.5. new 열 제외
+who2 <- who2 %>% select(-new)
+
+# 1.6. 성별, 연령 정보 분리
+who2 <- who2 %>% 
+  separate(sexage, c("sex", "age"), sep = 1)
+
+# 1.7. 연령대 정보 추가 및 age 열 제외
+who2 <- who2 %>%
+  mutate(
+    age_group  = case_when(
+      age == "014" ~ "0~14세",
+      age == "1524" ~ "15~24세",
+      age == "2534" ~ "25~34세",
+      age == "3544" ~ "35~44세",
+      age == "4554" ~ "45~54세",
+      age == "5564" ~ "55~64세",
+      age == "65" ~ "65세 이상"
+    )
+  )
+who2 <- who2 %>% select(-age)
+
+pander(head(who2, 3))
+```
+
+2. `country`, `iso2`, `iso3` 변수 비교
+
+  + 국가별 결핵 사례 누적 수를 계산하여 상위 5개 국가에 대해 시각화를 진행함
+```{r include=FALSE}
+# 3.1. country별로 누적 합계 계산
+country_counts <- who2 %>%
+  group_by(country) %>%
+  summarise(country_count = sum(number_of_cases, na.rm = TRUE)) %>%
+  arrange(desc(country_count)) 
+
+#print(country_counts)
+
+# 3.2. iso2별로 누적 합계 계산
+iso2_counts <- who2 %>%
+  group_by(iso2) %>%
+  summarise(iso2_count = sum(number_of_cases, na.rm = TRUE)) %>%
+  arrange(desc(iso2_count)) 
+
+# 3.3. iso3별로 누적 합계 계산
+iso3_counts <- who2 %>%
+  group_by(iso3) %>%
+  summarise(iso3_count = sum(number_of_cases, na.rm = TRUE)) %>%
+  arrange(desc(iso3_count))  
+
+# 3.4.  상위 5개 추출
+top5_country <- country_counts %>%
+  top_n(5, wt = country_count) %>%
+  arrange(desc(country_count)) %>%
+  mutate(category = "Country")
+
+top5_iso2 <- iso2_counts %>%
+  top_n(5, wt = iso2_count) %>%
+  arrange(desc(iso2_count)) %>%
+  mutate(category = "ISO2")
+
+top5_iso3 <- iso3_counts %>%
+  top_n(5, wt = iso3_count) %>%
+  arrange(desc(iso3_count)) %>%
+  mutate(category = "ISO3")
+
+# 3.5. 세 데이터를 하나로 결합
+top5_combined <- bind_rows(
+  top5_country %>% rename(count = country_count, name = country),
+  top5_iso2 %>% rename(count = iso2_count, name = iso2),
+  top5_iso3 %>% rename(count = iso3_count, name = iso3)
+) %>%
+  mutate(
+    category = factor(category, levels = c("Country", "ISO2", "ISO3")),
+    name = factor(name, levels = unique(name[order(category)])) # category 순서에 맞게 정렬
+  )
+```
+
+```{r fig.width=5, fig.height=2.5, fig.align='center'}
+# 3.6.  Line chat 시각화
+ggplot(top5_combined, aes(x = reorder(name, -count), y = count, fill = category)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  scale_y_continuous(labels = scales::comma) + 
+  scale_fill_manual(values = c("Country" = "black", "ISO2" = "gray50", "ISO3" = "gray80")) + 
+  labs(
+    title = NULL,
+    x = NULL,
+    y = NULL, 
+    fill = "Variable"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+**Conclusion**
+
++ **`country`, `iso2`, `iso3`는 모두 219개 국가 정보를 담고 있는 변수로 의미가 중복됨**
++ 국가의 수가 200개 이상이므로 **데이터 처리나 분석 및 시각화를 진행하는 경우 `iso2`, `iso3`를 사용하는 것이 효과적임**
+
+
+\newpage
+
+```{r, echo=TRUE, results='hide'}
+"Written by Park, Ji-hyun"
+```
+
+

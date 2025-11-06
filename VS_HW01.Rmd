@@ -1,0 +1,96 @@
+---
+# title: "essay, one-paged-note, homework"
+# subtitle: "subtitle"
+# author: "심민규 `mksim@seoultech.ac.kr`"
+# date: "Lastly updated on `r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    highlight: haddock
+    keep_tex: yes
+    includes:
+      in_header: latex_support/latex-topmatter_pdf.tex
+    # toc: yes # table of contents yes/no/True/False
+    # toc_depth: 2 # toc depth 1 or 2 recommended
+    number_sections: yes # yes/no/True/False
+    extra_dependencies:
+      - fontspec
+    # toc: yes # table of contents yes/no/True/False
+    # toc_depth: 2 # toc depth 1 or 2 recommended
+  html_document:
+    toc: yes
+    toc_depth: '1'
+    df_print: paged
+monofont: Courier New # Consolas or Courier New
+smaller: yes
+classoption: a4paper # letter or a4paper
+header-includes:
+- \usepackage{tikz}
+- \usepackage{pgfplots}
+- \pgfplotsset{compat=1.17}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+<!-- \begin{center} -->
+<!-- \vspace{100pt} -->
+<!-- \includegraphics[height=0.3in]{latex_support/logo_ds.png}  -->
+<!-- \end{center} -->
+
+\begin{center}
+\begin{Large}
+\textbf{AI가 인간에게 주는 가장 큰 가능성은 무엇인가}\\
+\end{Large}
+\begin{normalsize}
+인간의 능력을 확장시키는 AI와 자율적으로 작동하는 AI를 중심으로
+\end{normalsize}
+\end{center}
+
+AI와 관련된 연구와 그로 인한 혁신은 다양한 영역에서 일어나고 있다. 가까운 미래에 긍정적인 영향을 미칠 것으로 예상되는 AI는 두 가지로 설명할 수 있다.
+
+\section{인간의 능력을 확장시키는 AI}
+AI는 다양한 방식으로 사람들의 능력을 확장시킬 수 있다. AI 시스템과 인간은 상호 보완적인 강점을 가지고 있기 때문에, 이들을 결합하여 효과적인 인간-AI 협업을 창출하기 위해 아래와 같은 연구가 진행되고 있다.
+
+
+|      |인사이트 도출              | 의사 결정 지원                 | AI를 활용한 보조          |
+|:-----|:--------------------------|:-------------------------------|:--------------------------|
+|내용  |1. 기존 문제 개선\&해결    |1. 복잡한 데이터 요약           |1. 기본적인 지원           |
+|      |2. 새로운 분야 발견        |2. 미래 결과 예측               |                           | 
+|      |                           |3. 효율적인 업무 지원           |                           |                           
+|      |                           |4. 정보\&자원의 균형적 결정     |                           |                          
+|예시  |· 화학 분야 합성 분자 식별 |· 계약서, 특허 등 문서 분석     |· 사진 텍스트 처리 및 번역 |
+|      |· 에너지 분야 효율성 개선  |· AI 기반 조기 경고 시스템      |· 센서를 결합한 헬스 케어  |
+|      |· 질병 및 지진 역학 예측   |· 비즈니스 챗봇                 |· 자율주행차               |
+|      |· 단어 의미 변화 분석      |· 상품\&서비스 매칭             |· AI 보조 수술 도구        |
+
+
+
+\section{자율적으로 작동하는 AI}
+인간과 밀접하게 연결되지 않고 자율적으로 작동하는 AI도 있다. 이러한 경우 알고리즘 자체가 아닌 다양한 이슈들이 해결 과제로 남아 있다. 
+
++ 예시
+  + 청정 에너지, 물류, 통신 분야 운영 모니터링
+  + 스마트 시티 구축을 통한 공공 서비스 사용 및 교통 관리
+  + AI 기반 교육 도구를 통한 가상 현실 교육 시나리오 지원
+
++ 한계
+  + 적합한 데이터 수집 및 일반화의 어려움
+  + 시스템의 보상 또는 비용 함수에 대한 정확한 기준 설정의 어려움
+  + 다양한 이해관계자의 의견을 고려해야 하는 이슈
+  + 법적 책임 및 규정 준수 문제, 비용 문제 
+
+\newpage
+
+```{r, echo=TRUE, results='hide'}
+"Written by Park, Ji-hyun"
+```
+
+

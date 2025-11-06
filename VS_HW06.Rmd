@@ -1,0 +1,134 @@
+---
+# title: "essay, one-paged-note, homework"
+# subtitle: "subtitle"
+# author: "심민규 `mksim@seoultech.ac.kr`"
+# date: "Lastly updated on `r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    highlight: haddock
+    keep_tex: yes
+    includes:
+      in_header: latex_support/latex-topmatter_pdf.tex
+    # toc: yes # table of contents yes/no/True/False
+    # toc_depth: 2 # toc depth 1 or 2 recommended
+    number_sections: yes # yes/no/True/False
+  html_document:
+    toc: yes
+    toc_depth: '1'
+    df_print: paged
+monofont: Courier New # Consolas or Courier New
+smaller: yes
+classoption: a4paper # letter or a4paper
+header-includes:
+- \usepackage{tikz}
+- \usepackage{pgfplots}
+- \pgfplotsset{compat=1.17}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+<!-- \begin{center} -->
+<!-- \vspace{100pt} -->
+<!-- \includegraphics[height=0.3in]{latex_support/logo_ds.png}  -->
+<!-- \end{center} -->
+
+\begin{center}
+\begin{Large}
+\textbf{hwy 변수는 정규분포를 따르는가?}\\
+\end{Large}
+\begin{normalsize}
+histogram을 통해 확인한 자동차 연비 데이터 분포 
+\end{normalsize}
+\end{center}
+
+```{r include=FALSE}
+library(ggplot2)
+```
+
+**1. Histogram with Normal Curve**
+
+  + `mpg` 데이터셋의 `hwy` 변수에 대한 히스토그램을 나타냄
+  + 정규분포 곡선(빨간색)과 스무딩 곡선(검정색)을 추가함
+
+```{r include=FALSE}
+ggplot(mpg, aes(x = hwy)) +
+  geom_density(linewidth = 1, outline.type = "upper", colour = "black") + # Smoothing curve
+  geom_histogram(aes(y = ..density..), 
+                 color = "black", fill = "skyblue", alpha = 0.5) +        # Histogram
+  stat_function(fun = dnorm, args = list(mean = 23, sd = 5), 
+                col = 'red', lty = 1, size = 1) +                         # Normal curve
+  annotate("text", x = 37, y = 0.03, label = "Smoothing Curve", size = 4, color = "black") + 
+  annotate("text", x = 35, y = 0.05, label = "Normal Curve", size = 4, color = "red")  
+
+ggsave("hw06_plot1.png")
+```
+\begin{figure}
+\centering
+\label{tofsignal}
+\begin{tabular}{cc}
+\includegraphics[width=0.5\textwidth]{hw06_plot1.png}
+\end{tabular}
+\caption{Histogram with Normal Curve}
+\end{figure}
+
+
+**2. Histogram by Bins**
+
+  + `mpg` 데이터셋의 `hwy` 변수에 대해 각각 bins = 10, bins = 25인 히스토그램을 나타냄
+
+```{r include=FALSE}
+ggplot(mpg, aes(x=hwy)) +
+  geom_density(linewidth = 1, colour = "black") +                         # smoothing curve
+  geom_histogram(aes(y = ..density..),
+                 bins = 10, color = "black",
+                 fill = "pink", alpha = 0.5) +                            # histogram
+  stat_function(fun = dnorm, args = list(mean = 23, sd = 5),              # normal curve
+                col = 'red', lty = 1, size = 1) +                         # Normal curve
+  annotate("text", x = 37, y = 0.03, label = "Smoothing Curve", size = 4, color = "black") + 
+  annotate("text", x = 35, y = 0.05, label = "Normal Curve", size = 4, color = "red")  
+ggsave("hw06_plot2.png")
+
+
+ggplot(mpg, aes(x=hwy)) +
+  geom_density(linewidth = 1, outline.type = "upper",colour = "black") +  # smoothing curve
+  geom_histogram(aes(y = ..density..),
+                 bins = 25, color = "black",
+                 fill = "pink", alpha= 0.5) +                             # histogram
+  stat_function(fun = dnorm, args = list(mean = 23, sd = 5),              # normal curve
+                col = 'red', lty = 1, size = 1) +                         # Normal curve
+  annotate("text", x = 37, y = 0.03, label = "Smoothing Curve", size = 4, color = "black") + 
+  annotate("text", x = 35, y = 0.05, label = "Normal Curve", size = 4, color = "red")  
+ggsave("hw06_plot3.png")
+
+```
+
+
+\begin{figure}
+\centering
+\label{tofsignal}
+\begin{tabular}{cc}
+\includegraphics[width=0.5\textwidth]{hw06_plot2.png}& 
+\includegraphics[width=0.5\textwidth]{hw06_plot3.png}
+\end{tabular}
+\caption{Hisogram(bins=10) \& Histogram(bins=25)}
+\end{figure}
+
+
+
+**3. Conclusion**
+
+히스토그램을 통해 `hwy` 변수의 분포를 확인한 결과, 히스토그램은 최소 3 개의 peak를 가지고 있는 것으로 보인다. 또한, 데이터의 분포와 정규분포 곡선을 비교했을 때 일치 하지 않는 것을 확인 할 수 있다. 특히 bins가 세분화될 수록 이 차이가 심화되어 **`hwy` 변수는 정규분포를 따르지 않는다**고 할 수 있다.
+
+
+\newpage
+
+```{r, echo=TRUE, results='hide'}
+"Written by Park, Ji-hyun"
+```
+
+

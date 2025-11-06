@@ -1,0 +1,187 @@
+---
+# title: "essay, one-paged-note, homework"
+# subtitle: "subtitle"
+# author: "심민규 `mksim@seoultech.ac.kr`"
+# date: "Lastly updated on `r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    highlight: haddock
+    keep_tex: yes
+    includes:
+      in_header: latex_support/latex-topmatter_pdf.tex
+    # toc: yes # table of contents yes/no/True/False
+    # toc_depth: 2 # toc depth 1 or 2 recommended
+    number_sections: yes # yes/no/True/False
+  html_document:
+    toc: yes
+    toc_depth: '1'
+    df_print: paged
+monofont: Courier New # Consolas or Courier New
+smaller: yes
+classoption: a4paper # letter or a4paper
+header-includes:
+- \usepackage{tikz}
+- \usepackage{pgfplots}
+- \pgfplotsset{compat=1.17}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+<!-- \begin{center} -->
+<!-- \vspace{100pt} -->
+<!-- \includegraphics[height=0.3in]{latex_support/logo_ds.png}  -->
+<!-- \end{center} -->
+
+\begin{center}
+\begin{Large}
+\textbf{비행기 연식과 지연 시간 간의 연관성}\\
+\end{Large}
+\begin{normalsize}
+선형 회귀 분석을 바탕으로
+\end{normalsize}
+\end{center}
+
+\section{Introduction}
+`nycflights13` 패키지의 `flights`와 `plane` 데이터를 기준으로 비행기 연식과 지연 시간 간의 연관성이 있는지 파악하고자 한다. 
+
+
+\section{Analysis}
+전체 데이터 중 결측값을 제거한 273,853개를 기준으로 분석을 진행하였다. 분석 절차는 아래와 같다.
+
+```{r include=FALSE}
+# 0. library load
+library(tidyverse)
+library(nycflights13)
+library(dplyr)
+library(ggplot2)
+library(ggpattern)
+```
+
+
+1. 데이터 조회 및 전처리
+    + 결측값 제거 및 비행기 연식(= 비행일 - 비행기 제조 연도) 컬럼 추가 
+```{r include=FALSE}
+# 1.1. [flights]데이터와 [planes]데이터를 {tailnum}키를 기준으로 join
+data <- flights %>% left_join(planes %>% rename(planes_year = year), by = "tailnum")
+
+# 1.2. 비행기 제조 연도, 출발/도착 지연 시간 결측값 제거
+data_cleaned <- data %>% filter(!is.na(planes_year) & !is.na(dep_delay) & !is.na(arr_delay)) %>% mutate(planes_year = as.numeric(planes_year)) # planes_year을 숫자형으로 변환
+data_cleaned <- data_cleaned %>% select(tailnum, year, planes_year, dep_delay, arr_delay) # tailnum, year, planes_year, dep_delay, arr_delay 열 추출
+
+# 1.3. 비행기 연식({flights$year} - {plane$year}) 계산 컬럼 추가
+data_cleaned <- data_cleaned %>% mutate(tibble(year-planes_year))%>% rename("planes_age" = "year - planes_year")
+```
+
+
+2. 산점도 확인 
+    + 출발/도착 지연 시간의 회귀선 기울기가 거의 없으므로 연관성을 파악하기 어려움
+```{r include=FALSE}
+# 2.1. 비행기 연식 10년 간격으로 구간화
+data_grouped <- data_cleaned %>%
+  mutate(planes_age_group = cut(planes_age, 
+                                breaks = seq(0, max(planes_age, na.rm = TRUE) + 10, by = 10), # 0부터 최대연식+10년까지 10년단위로 구간화
+                                right = FALSE, 
+                                labels = 0:(length(seq(0, max(planes_age, na.rm = TRUE), by = 10)) - 1))) # 구간별 번호 매핑(0, 1, ... 5)
+
+# 2.2. 데이터 재구성: 출발 지연 시간과 도착 지연 시간을 하나의 열로 변환
+data_long <- data_grouped %>%
+  pivot_longer(cols = c(dep_delay, arr_delay), 
+               names_to = "delay_type", 
+               values_to = "delay_time") %>%
+  mutate(delay_type = factor(recode(delay_type, 
+                                    "dep_delay" = "출발 지연 시간", 
+                                    "arr_delay" = "도착 지연 시간"),
+                             levels = c("출발 지연 시간", "도착 지연 시간")))
+
+# 2.3. 비행기 연식 구간별 box plot 생성
+boxplot <- ggplot(data_long, aes(x = planes_age_group, y = delay_time, fill = delay_type)) +
+  geom_boxplot(alpha = 0.5, position = position_dodge(width = 0.8), width = 0.7) +
+  labs(title = "비행기 연식 구간별 출발 지연 시간 및 도착 지연 시간 분포",
+       x = "비행기 연식(10년 단위)",
+       y = "지연 시간 (분)",
+       fill = "지연 유형",
+       linetype = "지연 유형") +
+  scale_fill_manual(values = c("출발 지연 시간" = "grey80", "도착 지연 시간" = "white")) +
+  scale_x_discrete(labels = c(
+    "0" = "0: 10년 미만", 
+    "1" = "1: 10년 이상 20년 미만",
+    "2" = "2: 20년 이상 30년 미만", 
+    "3" = "3: 30년 이상 40년 미만",
+    "4" = "4: 40년 이상 50년 미만", 
+    "5" = "5: 50년 이상"
+  )) +
+  theme_minimal()
+
+ggsave("hw02_box_plot.jpg", plot = boxplot, width = 12, height = 6, dpi = 300)
+
+
+# 2.4. 데이터 재구성: 출발 지연 시간과 도착 지연 시간을 하나의 열로 변환
+data_long <- data_cleaned %>%
+  pivot_longer(cols = c(dep_delay, arr_delay), 
+               names_to = "delay_type", 
+               values_to = "delay_time") %>%
+  mutate(delay_type = factor(recode(delay_type, "dep_delay" = "출발 지연 시간", "arr_delay" = "도착 지연 시간"), 
+                             levels = c("출발 지연 시간", "도착 지연 시간")))
+
+# 2.5. 산점도 시각화
+scatter_plot <- ggplot(data_long, aes(x = planes_age, y = delay_time, shape = delay_type)) +
+  geom_point(aes(color = delay_type), alpha = 0.6, size = 1.5) +
+  geom_smooth(data = subset(data_long, delay_type == "출발 지연 시간"), method = "lm", color = "blue", se = TRUE, size = 1) + 
+  geom_smooth(data = subset(data_long, delay_type == "도착 지연 시간"), method = "lm", color = "red", se = TRUE, size = 1) + 
+  scale_color_manual(values = c("출발 지연 시간" = "skyblue", "도착 지연 시간" = "salmon")) + # 점 색상 설정
+  scale_shape_manual(values = c("출발 지연 시간" = 16, "도착 지연 시간" = 17)) + # 원과 삼각형 모양으로 구분
+  labs(x = "비행기 연식(년)", 
+       y = "지연 시간(분)") +
+  facet_wrap(~ delay_type, scales = "free_y", strip.position = "top") + # 지연 시간별 패널 분할
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") # 범례 제거
+
+ggsave("hw02_scatter_plot.jpg", plot = scatter_plot, width = 12, height = 4, dpi = 300)
+
+```
+
+```{r,figures-side, fig.show='hold', out.width="100%", fig.align='center'}
+#knitr::include_graphics("hw02_box_plot.jpg")
+knitr::include_graphics("hw02_scatter_plot.jpg")
+```
+
+
+3. 선형 회귀 분석
+    + R-squared 값이 작아 비행기 연식과 출발/도착 지연 시간 간의 연관성을 설명하기 어려움
+```{r include=FALSE}
+# 1.1. 출발 지연 시간과 비행기 연식의 선형 회귀 모델
+dep_delay_model <- lm(dep_delay ~ planes_age, data = data_cleaned)
+summary(dep_delay_model)
+
+# 1.2. 도착 지연 시간과 비행기 연식의 선형 회귀 모델
+arr_delay_model <- lm(arr_delay ~ planes_age, data = data_cleaned)
+summary(arr_delay_model)
+#  + 비행기 연식이 1년 증가할수록 출발 지연 시간이 약 0.096분 감소하는 경향이 있지만, R-squared 값이 낮아 두 변수 간의 연관성을 설명하기 어려움
+#  + 비행기 연식이 1년 증가할수록 도착 지연 시간이 약 0.124분 감소하는 경향이 있지만, R-squared 값이 낮아 두 변수 간의 연관성을 설명하기 어려움
+```
+
+|            |출발 지연 시간  | 도착 지연 시간  |
+|:-----------|---------------:|----------------:|
+|Coefficients|        -0.09551|         -0.12400|
+|p-value     |         2.4e-15|            2e-16| 
+|R-squared   |       0.0002289|        0.0003123|
+
+
+\section{Conclusion}
+
++ 비행기 연식과 출발/도착 지연 시간 간의 연관성이 있다고 설명하기 어려움
++ 지연 시간에 영향을 미치는 다양한 변수(ex. 날씨 등)가 함께 고려되어야 함
+
+
+\newpage
+
+```{r, echo=TRUE, results='hide'}
+"Written by Park, Ji-hyun"
+```
+
+

@@ -1,0 +1,96 @@
+---
+# title: "essay, one-paged-note, homework"
+# subtitle: "subtitle"
+# author: "심민규 `mksim@seoultech.ac.kr`"
+# date: "Lastly updated on `r Sys.Date()`"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    highlight: haddock
+    keep_tex: yes
+    includes:
+      in_header: latex_support/latex-topmatter_pdf.tex
+    # toc: yes # table of contents yes/no/True/False
+    # toc_depth: 2 # toc depth 1 or 2 recommended
+    number_sections: yes # yes/no/True/False
+  html_document:
+    toc: yes
+    toc_depth: '1'
+    df_print: paged
+monofont: Courier New # Consolas or Courier New
+smaller: yes
+classoption: a4paper # letter or a4paper
+header-includes:
+- \usepackage{tikz}
+- \usepackage{pgfplots}
+- \pgfplotsset{compat=1.17}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+<!-- \begin{center} -->
+<!-- \vspace{100pt} -->
+<!-- \includegraphics[height=0.3in]{latex_support/logo_ds.png}  -->
+<!-- \end{center} -->
+
+\begin{center}
+\begin{Large}
+\textbf{엔진 크기와 연비의 관계}\\
+\end{Large}
+\begin{normalsize}
+3-step framework, ggplot()을 활용한 시각화 
+\end{normalsize}
+\end{center}
+
+```{r include=FALSE}
+library(ggplot2)
+```
+
+**Code**
+
+```{r echo=TRUE}
+hw05_plot <- 
+  ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color=class)) + 
+  geom_point() + 
+  geom_smooth(aes(linetype = class), se = FALSE, show.legend = FALSE) +
+  labs(title = "Graph about Engine Size & Fuel Efficiency", # title
+       subtitle = "Comparison by Car Model",         # subtitle
+       x = "Engine Size",                            # x-axis label
+       y = "Fuel Efficiency",                        # y-axis label
+       color = "Car Model") +                        # legend title
+  theme(legend.position = "top") +                   # legend position
+  theme(plot.title = element_text(hjust = 0.5),      # title position
+        plot.subtitle = element_text(hjust = 0.5))+  # subtitle position
+  guides(color = guide_legend(nrow = 1))             # legend in one row
+```
+
+```{r include=FALSE}
+ggsave("hw05_plot.png")
+```
+
+**Graph**
+
+```{r, echo=FALSE, fig.align="center", out.width="75%", out.height="60%"}
+knitr::include_graphics("hw05_plot.png")
+```
+
+|                    |                                                                                |
+|:-------------------|:-------------------------------------------------------------------------------|
+|(Data) **What**     | · `mpg` 데이터셋의 `displ`(엔진 크기), `hwy`(연비), `class`(자동차 모델)       |
+|(Task) **Why**      | · 자동차 모델별 엔진 크기와 연비의 관계                                   |
+|(Vis Idiom) **How **| · 산점도(point), 추세선(line)                                                  |
+
+
+
+
+\newpage
+
+```{r, echo=TRUE, results='hide'}
+"Written by Park, Ji-hyun"
+```
+
+
